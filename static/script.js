@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const statusText = document.getElementById('statusText');
                 const date = new Date(data.last_update);
                 const formattedDate = date.toLocaleString();
-                
+
                 if (data.status === 'healthy') {
                     statusText.innerHTML = `
                         <span class="status-healthy">●</span> API is healthy<br>
@@ -32,7 +32,47 @@ document.addEventListener('DOMContentLoaded', function() {
     updateStatus();
     setInterval(updateStatus, 30000);
 
-    // Fetch example course data
+    // Course search functionality
+    const searchForm = document.getElementById('searchForm');
+    const searchInput = document.getElementById('searchInput');
+    const searchResults = document.getElementById('searchResults');
+
+    searchForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const searchTerm = searchInput.value.trim();
+
+        if (searchTerm) {
+            searchResults.innerHTML = '<div class="text-center">Searching...</div>';
+
+            fetch(`/api/courses?name=${encodeURIComponent(searchTerm)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success' && data.data.length > 0) {
+                        const resultsHtml = data.data.map(course => `
+                            <div class="search-result-item">
+                                <div class="course-title">
+                                    <span class="course-code">${course.courseString}</span> - ${course.title}
+                                </div>
+                                <div class="course-details">
+                                    Credits: ${course.credits}
+                                    ${course.sections ? `<br>Sections: ${course.sections.length}` : ''}
+                                </div>
+                            </div>
+                        `).join('');
+
+                        searchResults.innerHTML = resultsHtml;
+                    } else {
+                        searchResults.innerHTML = '<div class="text-center">No courses found</div>';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error searching courses:', error);
+                    searchResults.innerHTML = '<div class="text-center text-danger">Error searching courses</div>';
+                });
+        }
+    });
+
+    // Example response
     fetch('/api/courses?subject=CS&course_number=111')
         .then(response => response.json())
         .then(data => {

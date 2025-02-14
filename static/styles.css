@@ -57,3 +57,58 @@ code {
 .status-error {
     color: #E53E3E;
 }
+
+/* Search Styles */
+.search-container {
+    background-color: white;
+    border-left: 4px solid var(--color-secondary);
+}
+
+.search-results {
+    margin-top: 1rem;
+}
+
+.search-result-item {
+    padding: 1rem;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+    transition: background-color 0.2s;
+}
+
+.search-result-item:last-child {
+    border-bottom: none;
+}
+
+.search-result-item:hover {
+    background-color: var(--color-background);
+}
+
+.course-title {
+    font-weight: 600;
+    color: var(--color-primary);
+    margin-bottom: 0.5rem;
+}
+
+.course-details {
+    font-size: 0.9rem;
+    color: #4A5568;
+}
+
+.course-code {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--color-secondary);
+}
+
+#searchInput {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.btn-primary {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+}
+
+.btn-primary:hover {
+    background-color: #3182ce;
+    border-color: #3182ce;
+}
