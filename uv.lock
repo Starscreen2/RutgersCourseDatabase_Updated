@@ -669,6 +669,7 @@ dependencies = [
     { name = "psycopg2-binary" },
     { name = "requests" },
     { name = "trafilatura" },
+    { name = "urllib3" },
 ]
 
 [package.metadata]
@@ -683,6 +684,7 @@ requires-dist = [
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
     { name = "requests", specifier = ">=2.32.3" },
     { name = "trafilatura", specifier = ">=2.0.0" },
+    { name = "urllib3", specifier = ">=2.3.0" },
 ]
 
 [[package]]

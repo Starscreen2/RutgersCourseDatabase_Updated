@@ -26,7 +26,7 @@ def after_request(response):
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"],
+    default_limits=["10 per minute"],
     storage_uri="memory://"
 )
 
@@ -50,8 +50,7 @@ def health_check():
     })
 
 @app.route('/api/courses')
-@limiter.limit("30 per minute")
-@cache.cached(timeout=60)
+@limiter.limit("100 per minute")
 def get_courses():
     try:
         subject = request.args.get('subject')
@@ -81,9 +80,12 @@ def serve_static(path):
 
 @app.errorhandler(429)
 def ratelimit_handler(e):
+    retry_seconds = int(e.description.split('in')[1].split('seconds')[0].strip())
     return jsonify({
         "status": "error",
-        "message": "Rate limit exceeded"
+        "message": "Please slow down! You can only make 10 requests per minute.",
+        "retry_after": retry_seconds,
+        "wait_message": f"Please wait {retry_seconds} seconds before trying again."
     }), 429
 
 if __name__ == '__main__':
