@@ -1,0 +1,59 @@
+:root {
+    --color-primary: #2D3748;
+    --color-secondary: #4299E1;
+    --color-background: #F7FAFC;
+    --color-text: #1A202C;
+    --color-success: #48BB78;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    line-height: 1.6;
+}
+
+code, pre {
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.endpoint-card {
+    border-radius: 8px;
+    border: 1px solid rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.endpoint-card h3 {
+    color: var(--color-secondary);
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.api-status {
+    background-color: white;
+    border-left: 4px solid var(--color-secondary);
+}
+
+pre {
+    background-color: #f8f9fa;
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+
+code {
+    color: var(--color-secondary);
+}
+
+.status-healthy {
+    color: var(--color-success);
+}
+
+.status-error {
+    color: #E53E3E;
+}
