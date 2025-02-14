@@ -20,42 +20,66 @@ class CourseFetcher:
         try:
             return datetime.strptime(military_time, "%H%M").strftime("%I:%M %p")
         except ValueError:
+            logger.warning(f"Invalid military time format: {military_time}")
             return "N/A"
 
     def format_meeting_time(self, meeting: Dict) -> Dict:
         """Format meeting time information"""
-        start_time = meeting.get("startTimeMilitary", "N/A")
-        end_time = meeting.get("endTimeMilitary", "N/A")
+        try:
+            start_time = meeting.get("startTimeMilitary", "N/A")
+            end_time = meeting.get("endTimeMilitary", "N/A")
 
-        return {
-            "day": meeting.get("meetingDay", ""),
-            "start_time": {
-                "military": start_time,
-                "formatted": self.convert_to_am_pm(start_time)
-            },
-            "end_time": {
-                "military": end_time,
-                "formatted": self.convert_to_am_pm(end_time)
-            },
-            "building": meeting.get("buildingCode", "N/A"),
-            "room": meeting.get("roomNumber", "N/A"),
-            "mode": meeting.get("meetingModeDesc", "N/A"),
-            "campus": meeting.get("campusLocation", "N/A")
-        }
+            return {
+                "day": meeting.get("meetingDay", ""),
+                "start_time": {
+                    "military": start_time,
+                    "formatted": self.convert_to_am_pm(start_time)
+                },
+                "end_time": {
+                    "military": end_time,
+                    "formatted": self.convert_to_am_pm(end_time)
+                },
+                "building": meeting.get("buildingCode", "N/A"),
+                "room": meeting.get("roomNumber", "N/A"),
+                "mode": meeting.get("meetingModeDesc", "N/A"),
+                "campus": meeting.get("campusLocation", "N/A")
+            }
+        except Exception as e:
+            logger.error(f"Error formatting meeting time: {str(e)}")
+            return {
+                "day": "N/A",
+                "start_time": {"military": "N/A", "formatted": "N/A"},
+                "end_time": {"military": "N/A", "formatted": "N/A"},
+                "building": "N/A",
+                "room": "N/A",
+                "mode": "N/A",
+                "campus": "N/A"
+            }
 
     def format_section(self, section: Dict) -> Dict:
         """Format section information with detailed meeting times"""
-        return {
-            "number": section.get("number", ""),
-            "index": section.get("index", ""),
-            "instructors": [instr.get("name", "") for instr in section.get("instructors", [])],
-            "status": section.get("openStatusText", ""),
-            "comments": section.get("commentsText", ""),
-            "meeting_times": [
-                self.format_meeting_time(meeting)
-                for meeting in section.get("meetingTimes", [])
-            ]
-        }
+        try:
+            return {
+                "number": section.get("number", ""),
+                "index": section.get("index", ""),
+                "instructors": [instr.get("name", "") for instr in section.get("instructors", [])],
+                "status": section.get("openStatusText", ""),
+                "comments": section.get("commentsText", ""),
+                "meeting_times": [
+                    self.format_meeting_time(meeting)
+                    for meeting in section.get("meetingTimes", [])
+                ]
+            }
+        except Exception as e:
+            logger.error(f"Error formatting section: {str(e)}")
+            return {
+                "number": "Error",
+                "index": "",
+                "instructors": [],
+                "status": "Error loading section",
+                "comments": "",
+                "meeting_times": []
+            }
 
     def update_courses(self) -> None:
         """Fetch fresh course data from Rutgers API"""
@@ -65,70 +89,96 @@ class CourseFetcher:
                 "term": "9",
                 "campus": "NB"
             }
-            response = requests.get(self.base_url, params=params)
+            response = requests.get(self.base_url, params=params, timeout=30)
             response.raise_for_status()
 
             courses = response.json()
             logger.debug(f"Retrieved {len(courses)} courses from API")
 
+            if not courses:
+                logger.warning("Received empty course list from API")
+                return
+
             self.courses = sorted(courses, key=lambda c: c.get("courseString", ""))
             self.last_update = datetime.now().isoformat()
             logger.info(f"Successfully updated courses at {self.last_update}")
+        except requests.exceptions.Timeout:
+            logger.error("Timeout while fetching courses from API")
+            if not self.courses:
+                raise
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Failed to fetch courses from API: {str(e)}")
+            if not self.courses:
+                raise
         except Exception as e:
-            logger.error(f"Failed to update courses: {str(e)}")
-            if not self.courses:  # Only raise if we have no data at all
+            logger.error(f"Unexpected error updating courses: {str(e)}")
+            if not self.courses:
                 raise
 
     def get_courses(self, subject: Optional[str] = None, course_number: Optional[str] = None, name: Optional[str] = None) -> List[Dict]:
         """Get filtered course data with enriched information"""
-        filtered_courses = self.courses
+        try:
+            if not self.courses:
+                logger.warning("No courses available")
+                return []
 
-        if subject:
-            filtered_courses = [
-                course for course in filtered_courses
-                if course.get("subject", "").lower() == subject.lower()
-            ]
+            filtered_courses = self.courses
 
-        if course_number:
-            filtered_courses = [
-                course for course in filtered_courses
-                if course.get("courseNumber", "") == course_number
-            ]
-
-        if name:
-            name_lower = name.lower()
-            filtered_courses = [
-                course for course in filtered_courses
-                if name_lower in course.get("title", "").lower()
-            ]
-
-        # Enrich course data with detailed information
-        enriched_courses = []
-        for course in filtered_courses:
-            enriched_course = {
-                "courseString": course.get("courseString", ""),
-                "title": course.get("title", ""),
-                "subject": course.get("subject", ""),
-                "subjectDescription": course.get("subjectDescription", ""),
-                "courseNumber": course.get("courseNumber", ""),
-                "credits": course.get("credits", ""),
-                "creditsDescription": course.get("creditsObject", {}).get("description", ""),
-                "school": course.get("school", {}).get("description", ""),
-                "campusLocations": [loc.get("description", "") for loc in course.get("campusLocations", [])],
-                "prerequisites": course.get("preReqNotes", ""),
-                "coreRequirements": [
-                    {
-                        "code": core.get("coreCode", ""),
-                        "description": core.get("coreCodeDescription", "")
-                    }
-                    for core in course.get("coreCodes", [])
-                ],
-                "sections": [
-                    self.format_section(section)
-                    for section in course.get("sections", [])
+            if subject:
+                filtered_courses = [
+                    course for course in filtered_courses
+                    if course.get("subject", "").lower() == subject.lower()
                 ]
-            }
-            enriched_courses.append(enriched_course)
 
-        logger.debug(f"Returning {len(enriched_courses)} enriched courses")
-        return enriched_courses
+            if course_number:
+                filtered_courses = [
+                    course for course in filtered_courses
+                    if course.get("courseNumber", "") == course_number
+                ]
+
+            if name:
+                name_lower = name.lower()
+                filtered_courses = [
+                    course for course in filtered_courses
+                    if name_lower in course.get("title", "").lower() or
+                    name_lower in course.get("subject", "").lower() or
+                    name_lower in course.get("subjectDescription", "").lower()
+                ]
+
+            # Enrich course data with detailed information
+            enriched_courses = []
+            for course in filtered_courses:
+                try:
+                    enriched_course = {
+                        "courseString": course.get("courseString", ""),
+                        "title": course.get("title", ""),
+                        "subject": course.get("subject", ""),
+                        "subjectDescription": course.get("subjectDescription", ""),
+                        "courseNumber": course.get("courseNumber", ""),
+                        "credits": course.get("credits", ""),
+                        "creditsDescription": course.get("creditsObject", {}).get("description", ""),
+                        "school": course.get("school", {}).get("description", ""),
+                        "campusLocations": [loc.get("description", "") for loc in course.get("campusLocations", [])],
+                        "prerequisites": course.get("preReqNotes", ""),
+                        "coreRequirements": [
+                            {
+                                "code": core.get("coreCode", ""),
+                                "description": core.get("coreCodeDescription", "")
+                            }
+                            for core in course.get("coreCodes", [])
+                        ],
+                        "sections": [
+                            self.format_section(section)
+                            for section in course.get("sections", [])
+                        ]
+                    }
+                    enriched_courses.append(enriched_course)
+                except Exception as e:
+                    logger.error(f"Error enriching course data: {str(e)}")
+                    continue
+
+            logger.debug(f"Returning {len(enriched_courses)} enriched courses")
+            return enriched_courses
+        except Exception as e:
+            logger.error(f"Error getting courses: {str(e)}")
+            return []

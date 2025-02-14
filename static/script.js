@@ -33,7 +33,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success' && data.data.length > 0) {
-                        const resultsHtml = data.data.map(course => `
+                        const resultsHtml = data.data.map((course, courseIndex) => `
                             <div class="search-result-item card mb-4">
                                 <div class="card-header">
                                     <h4 class="mb-0">${course.courseString} - ${course.title}</h4>
@@ -57,21 +57,29 @@ document.addEventListener('DOMContentLoaded', function() {
                                     </div>
 
                                     <div class="sections">
-                                        <h5>Available Sections:</h5>
-                                        ${course.sections.map(section => `
-                                            <div class="section-item card mb-3">
-                                                <div class="card-body">
-                                                    <h6>Section ${section.number} (Index: ${section.index})</h6>
-                                                    <p><strong>Instructors:</strong> ${section.instructors.join(', ') || 'TBA'}</p>
-                                                    <p><strong>Status:</strong> ${section.status}</p>
-                                                    ${section.comments ? `<p><strong>Comments:</strong> ${section.comments}</p>` : ''}
-                                                    <div class="meeting-times">
-                                                        <strong>Meeting Times:</strong><br>
-                                                        ${formatMeetingTimes(section.meeting_times)}
+                                        <button class="btn btn-primary mb-3" type="button" 
+                                                data-bs-toggle="collapse" 
+                                                data-bs-target="#sections-${courseIndex}" 
+                                                aria-expanded="false" 
+                                                aria-controls="sections-${courseIndex}">
+                                            Show/Hide ${course.sections.length} Sections
+                                        </button>
+                                        <div class="collapse" id="sections-${courseIndex}">
+                                            ${course.sections.map(section => `
+                                                <div class="section-item card mb-3">
+                                                    <div class="card-body">
+                                                        <h6>Section ${section.number} (Index: ${section.index})</h6>
+                                                        <p><strong>Instructors:</strong> ${section.instructors.join(', ') || 'TBA'}</p>
+                                                        <p><strong>Status:</strong> ${section.status}</p>
+                                                        ${section.comments ? `<p><strong>Comments:</strong> ${section.comments}</p>` : ''}
+                                                        <div class="meeting-times">
+                                                            <strong>Meeting Times:</strong><br>
+                                                            ${formatMeetingTimes(section.meeting_times)}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        `).join('')}
+                                            `).join('')}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
