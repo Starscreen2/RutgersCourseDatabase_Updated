@@ -23,7 +23,7 @@ class CourseFetcher:
             }
             response = requests.get(self.base_url, params=params)
             response.raise_for_status()
-            
+
             self.courses = sorted(response.json(), key=lambda c: c.get("courseString", ""))
             self.last_update = datetime.now().isoformat()
             logger.info(f"Successfully updated courses at {self.last_update}")
@@ -32,7 +32,7 @@ class CourseFetcher:
             if not self.courses:  # Only raise if we have no data at all
                 raise
 
-    def get_courses(self, subject: Optional[str] = None, course_number: Optional[str] = None) -> List[Dict]:
+    def get_courses(self, subject: Optional[str] = None, course_number: Optional[str] = None, name: Optional[str] = None) -> List[Dict]:
         """Get filtered course data"""
         filtered_courses = self.courses
 
@@ -46,6 +46,13 @@ class CourseFetcher:
             filtered_courses = [
                 course for course in filtered_courses
                 if course.get("courseNumber", "") == course_number
+            ]
+
+        if name:
+            name_lower = name.lower()
+            filtered_courses = [
+                course for course in filtered_courses
+                if name_lower in course.get("title", "").lower()
             ]
 
         return filtered_courses

@@ -56,8 +56,9 @@ def get_courses():
     try:
         subject = request.args.get('subject')
         course_number = request.args.get('course_number')
-        
-        courses = course_fetcher.get_courses(subject, course_number)
+        name = request.args.get('name')
+
+        courses = course_fetcher.get_courses(subject, course_number, name)
         return jsonify({
             "status": "success",
             "data": courses,

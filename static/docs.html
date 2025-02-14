@@ -32,15 +32,20 @@
                         <div class="card-body">
                             <h3>GET /api/courses</h3>
                             <p>Retrieve course information with optional filters</p>
-                            
+
                             <h4>Query Parameters</h4>
                             <ul>
                                 <li><code>subject</code> - Filter by subject code (e.g., CS)</li>
                                 <li><code>course_number</code> - Filter by course number (e.g., 111)</li>
+                                <li><code>name</code> - Search courses by name (e.g., "computer science")</li>
                             </ul>
 
-                            <h4>Example Request</h4>
-                            <pre><code class="language-bash">curl http://localhost:5000/api/courses?subject=CS&course_number=111</code></pre>
+                            <h4>Example Requests</h4>
+                            <pre><code class="language-bash"># Search by subject and course number
+curl http://localhost:5000/api/courses?subject=CS&course_number=111
+
+# Search by course name
+curl http://localhost:5000/api/courses?name=computer%20science</code></pre>
 
                             <h4>Example Response</h4>
                             <pre><code class="language-json" id="exampleResponse">
@@ -68,7 +73,7 @@
                             
                             <h4>Example Request</h4>
                             <pre><code class="language-bash">curl http://localhost:5000/api/health</code></pre>
-
+                            
                             <h4>Example Response</h4>
                             <pre><code class="language-json">{
     "status": "healthy",
