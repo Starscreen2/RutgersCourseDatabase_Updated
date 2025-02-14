@@ -39,7 +39,8 @@ class CourseFetcher:
             },
             "building": meeting.get("buildingCode", "N/A"),
             "room": meeting.get("roomNumber", "N/A"),
-            "mode": meeting.get("meetingModeDesc", "N/A")
+            "mode": meeting.get("meetingModeDesc", "N/A"),
+            "campus": meeting.get("campusLocation", "N/A")
         }
 
     def format_section(self, section: Dict) -> Dict:
@@ -67,7 +68,10 @@ class CourseFetcher:
             response = requests.get(self.base_url, params=params)
             response.raise_for_status()
 
-            self.courses = sorted(response.json(), key=lambda c: c.get("courseString", ""))
+            courses = response.json()
+            logger.debug(f"Retrieved {len(courses)} courses from API")
+
+            self.courses = sorted(courses, key=lambda c: c.get("courseString", ""))
             self.last_update = datetime.now().isoformat()
             logger.info(f"Successfully updated courses at {self.last_update}")
         except Exception as e:
@@ -104,9 +108,11 @@ class CourseFetcher:
             enriched_course = {
                 "courseString": course.get("courseString", ""),
                 "title": course.get("title", ""),
-                "subject": f"{course.get('subject', '')} - {course.get('subjectDescription', '')}",
+                "subject": course.get("subject", ""),
+                "subjectDescription": course.get("subjectDescription", ""),
                 "courseNumber": course.get("courseNumber", ""),
-                "credits": f"{course.get('credits', '')} ({course.get('creditsObject', {}).get('description', '')})",
+                "credits": course.get("credits", ""),
+                "creditsDescription": course.get("creditsObject", {}).get("description", ""),
                 "school": course.get("school", {}).get("description", ""),
                 "campusLocations": [loc.get("description", "") for loc in course.get("campusLocations", [])],
                 "prerequisites": course.get("preReqNotes", ""),
@@ -124,4 +130,5 @@ class CourseFetcher:
             }
             enriched_courses.append(enriched_course)
 
+        logger.debug(f"Returning {len(enriched_courses)} enriched courses")
         return enriched_courses
