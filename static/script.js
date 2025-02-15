@@ -46,7 +46,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (searchTerm) {
             searchResults.innerHTML = '<div class="text-center">Searching...</div>';
 
-            fetch(`/api/courses?name=${encodeURIComponent(searchTerm)}`)
+            const year = document.getElementById('yearSelect').value;
+            const term = document.getElementById('termSelect').value;
+            const campus = document.getElementById('campusSelect').value;
+
+            fetch(`/api/courses?name=${encodeURIComponent(searchTerm)}&year=${year}&term=${term}&campus=${campus}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success' && data.data.length > 0) {

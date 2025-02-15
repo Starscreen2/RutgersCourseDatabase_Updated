@@ -19,6 +19,29 @@
                 <div class="card-body">
                     <h5 class="card-title">Search Courses</h5>
                     <form id="searchForm" class="mb-3">
+                        <div class="row mb-3">
+                            <div class="col">
+                                <select id="yearSelect" class="form-select">
+                                    <option value="2024">2024</option>
+                                    <option value="2025" selected>2025</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <select id="termSelect" class="form-select">
+                                    <option value="0">Winter</option>
+                                    <option value="1" selected>Spring</option>
+                                    <option value="7">Summer</option>
+                                    <option value="9">Fall</option>
+                                </select>
+                            </div>
+                            <div class="col">
+                                <select id="campusSelect" class="form-select">
+                                    <option value="NB" selected>New Brunswick</option>
+                                    <option value="NK">Newark</option>
+                                    <option value="CM">Camden</option>
+                                </select>
+                            </div>
+                        </div>
                         <div class="input-group">
                             <input type="text" id="searchInput" class="form-control" placeholder="Search courses by name or subject...">
                             <button type="submit" class="btn btn-primary">Search</button>
