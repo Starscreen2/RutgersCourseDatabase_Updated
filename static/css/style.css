@@ -1,0 +1,55 @@
+:root {
+    --color-primary: #2D3748;
+    --color-secondary: #4299E1;
+    --color-background: #F7FAFC;
+    --color-text: #1A202C;
+    --color-success: #48BB78;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--color-background);
+    color: var(--color-text);
+    line-height: 1.6;
+}
+
+code {
+    font-family: 'IBM Plex Mono', monospace;
+}
+
+h1, h2, h3, h4 {
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+}
+
+.endpoint-card {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.example {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 6px;
+    margin: 1rem 0;
+}
+
+pre {
+    background: var(--color-primary);
+    padding: 1rem;
+    border-radius: 4px;
+    overflow-x: auto;
+}
+
+.btn-primary {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
+}
+
+.btn-primary:hover {
+    background-color: #3182ce;
+    border-color: #3182ce;
+}
