@@ -9,8 +9,27 @@ from urllib3.util.retry import Retry
 logger = logging.getLogger(__name__)
 
 class CourseFetcher:
+    # Mapping weekday codes to full names
+    WEEKDAY_MAP = {
+        "M": "Monday",
+        "T": "Tuesday",
+        "W": "Wednesday",
+        "H": "Thursday",
+        "F": "Friday",
+        "S": "Saturday",
+        "Su": "Sunday"
+    }
+
+    # Mapping campus IDs to campus names
+    CAMPUS_MAP = {
+        "1": "College Ave",
+        "2": "Busch",
+        "3": "Livingston",
+        "4": "Cook/Doug"
+    }
+
     def __init__(self):
-        self.courses = []
+        self.courses_by_params = {}  # Store courses for different parameter combinations
         self.last_update = None
         self.base_url = "https://classes.rutgers.edu/soc/api/courses.json"
 
@@ -24,26 +43,36 @@ class CourseFetcher:
         adapter = HTTPAdapter(max_retries=retry_strategy)
         self.session.mount("https://", adapter)
 
-        self.update_courses()  # Initial fetch
+        self.update_courses()  # Initial fetch with default params
 
     def convert_to_am_pm(self, military_time: str) -> str:
         """Convert military time to AM/PM format"""
         if not military_time or military_time == "N/A":
             return "N/A"
         try:
-            return datetime.strptime(military_time, "%H%M").strftime("%I:%M %p")
+            return datetime.strptime(military_time, "%H%M").strftime("%I:%M %p").lstrip("0")
         except ValueError:
             logger.warning(f"Invalid military time format: {military_time}")
             return "N/A"
 
+    def format_weekday(self, day: str) -> str:
+        """Convert weekday code to full name"""
+        return self.WEEKDAY_MAP.get(day, day)
+
+    def format_campus(self, campus_id: str) -> str:
+        """Convert campus ID to campus name"""
+        return self.CAMPUS_MAP.get(campus_id, campus_id)
+
     def format_meeting_time(self, meeting: Dict) -> Dict:
-        """Format meeting time information"""
+        """Format meeting time information with proper weekday and campus names"""
         try:
             start_time = meeting.get("startTimeMilitary", "N/A")
             end_time = meeting.get("endTimeMilitary", "N/A")
+            day_code = meeting.get("meetingDay", "")
+            campus_id = meeting.get("campusLocation", "N/A")
 
             return {
-                "day": meeting.get("meetingDay", ""),
+                "day": self.format_weekday(day_code),
                 "start_time": {
                     "military": start_time,
                     "formatted": self.convert_to_am_pm(start_time)
@@ -55,7 +84,7 @@ class CourseFetcher:
                 "building": meeting.get("buildingCode", "N/A"),
                 "room": meeting.get("roomNumber", "N/A"),
                 "mode": meeting.get("meetingModeDesc", "N/A"),
-                "campus": meeting.get("campusLocation", "N/A")
+                "campus": self.format_campus(campus_id)
             }
         except Exception as e:
             logger.error(f"Error formatting meeting time: {str(e)}")
@@ -94,14 +123,16 @@ class CourseFetcher:
                 "meeting_times": []
             }
 
-    def update_courses(self) -> None:
+    def update_courses(self, year="2025", term="1", campus="NB") -> None:
         """Fetch fresh course data from Rutgers API"""
         try:
             params = {
-                "year": "2025",
-                "term": "1",
-                "campus": "NB"
+                "year": year,
+                "term": term,
+                "campus": campus
             }
+            param_key = f"{year}_{term}_{campus}"
+
             logger.info(f"Fetching courses with parameters: {params}")
 
             response = self.session.get(self.base_url, params=params, timeout=30)
@@ -119,61 +150,56 @@ class CourseFetcher:
             if courses:
                 logger.debug(f"Sample course structure: {json.dumps(courses[0], indent=2)}")
 
-            self.courses = sorted(courses, key=lambda c: c.get("courseString", ""))
+            self.courses_by_params[param_key] = sorted(courses, key=lambda c: c.get("courseString", ""))
             self.last_update = datetime.now().isoformat()
             logger.info(f"Successfully updated courses at {self.last_update}")
 
         except requests.exceptions.Timeout:
             logger.error("Timeout while fetching courses from API")
-            if not self.courses:
+            if param_key not in self.courses_by_params:
                 raise
         except requests.exceptions.RequestException as e:
             logger.error(f"Failed to fetch courses from API: {str(e)}")
-            if not self.courses:
+            if param_key not in self.courses_by_params:
                 raise
         except json.JSONDecodeError as e:
             logger.error(f"Failed to parse API response: {str(e)}")
-            if not self.courses:
+            if param_key not in self.courses_by_params:
                 raise
         except Exception as e:
             logger.error(f"Unexpected error updating courses: {str(e)}")
-            if not self.courses:
+            if param_key not in self.courses_by_params:
                 raise
 
-    def get_courses(self, subject: Optional[str] = None, course_number: Optional[str] = None, name: Optional[str] = None) -> List[Dict]:
+    def get_courses(self, search: Optional[str] = None, year="2025", term="1", campus="NB") -> List[Dict]:
         """Get filtered course data with enriched information"""
         try:
-            if not self.courses:
-                logger.warning("No courses available")
+            param_key = f"{year}_{term}_{campus}"
+
+            # Update courses for these parameters if not already cached
+            if param_key not in self.courses_by_params:
+                self.update_courses(year, term, campus)
+
+            if not self.courses_by_params.get(param_key):
+                logger.warning(f"No courses available for parameters: year={year}, term={term}, campus={campus}")
                 return []
 
-            filtered_courses = self.courses
+            filtered_courses = self.courses_by_params[param_key]
 
-            if subject:
-                filtered_courses = [
-                    course for course in filtered_courses
-                    if course.get("subject", "").lower() == subject.lower()
-                ]
-
-            if course_number:
-                filtered_courses = [
-                    course for course in filtered_courses
-                    if course.get("courseNumber", "") == course_number
-                ]
-
-            if name:
-                name_lower = name.lower()
+            if search:
+                search_lower = search.lower()
                 # First get courses where title matches
                 title_matches = [
                     course for course in filtered_courses
-                    if name_lower in course.get("title", "").lower()
+                    if search_lower in course.get("title", "").lower()
                 ]
-                # Then get other matches (subject/description) that weren't already matched by title
+                # Then get other matches that weren't already matched by title
                 other_matches = [
                     course for course in filtered_courses
                     if course not in title_matches and (
-                        name_lower in course.get("subject", "").lower() or
-                        name_lower in course.get("subjectDescription", "").lower()
+                        search_lower in course.get("subject", "").lower() or
+                        search_lower in course.get("courseNumber", "").lower() or
+                        search_lower in course.get("subjectDescription", "").lower()
                     )
                 ]
                 filtered_courses = title_matches + other_matches
@@ -187,7 +213,8 @@ class CourseFetcher:
                         "title": course.get("title", ""),
                         "subject": course.get("subject", ""),
                         "subjectDescription": course.get("subjectDescription", ""),
-                        "courseNumber": course.get("courseNumber", ""),
+                        "course_number": course.get("courseNumber", ""),
+                        "description": course.get("courseDescription", ""),
                         "credits": course.get("credits", ""),
                         "creditsDescription": course.get("creditsObject", {}).get("description", ""),
                         "school": course.get("school", {}).get("description", ""),
@@ -210,7 +237,7 @@ class CourseFetcher:
                     logger.error(f"Error enriching course data: {str(e)}")
                     continue
 
-            logger.info(f"Returning {len(enriched_courses)} enriched courses for search: subject='{subject}', course_number='{course_number}', name='{name}'")
+            logger.info(f"Returning {len(enriched_courses)} enriched courses for search: '{search}'")
             return enriched_courses
         except Exception as e:
             logger.error(f"Error getting courses: {str(e)}")

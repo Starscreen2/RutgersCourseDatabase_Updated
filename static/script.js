@@ -6,22 +6,12 @@ document.addEventListener('DOMContentLoaded', function() {
         "4": "Cook/Doug"
     };
 
-    const weekdayMap = {
-        "M": "Monday",
-        "T": "Tuesday", 
-        "W": "Wednesday",
-        "H": "Thursday",
-        "F": "Friday",
-        "S": "Saturday",
-        "Su": "Sunday"
-    };
-
     // Helper function to format meeting times
     function formatMeetingTimes(meetingTimes) {
         return meetingTimes.map(meeting => `
-            ${weekdayMap[meeting.day] || meeting.day}: ${meeting.start_time.formatted} - ${meeting.end_time.formatted}
+            ${meeting.day}: ${meeting.start_time.formatted} - ${meeting.end_time.formatted}
             <br>Location: ${meeting.building} ${meeting.room}
-            <br>Campus: ${campusMap[meeting.campus] || meeting.campus}
+            <br>Campus: ${meeting.campus}
             <br>Mode: ${meeting.mode}
         `).join('<br><br>');
     }

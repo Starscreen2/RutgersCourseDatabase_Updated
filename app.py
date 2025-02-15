@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, render_template
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_caching import Cache
@@ -38,8 +38,19 @@ course_fetcher = CourseFetcher()
 
 # Initialize scheduler
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=course_fetcher.update_courses, trigger="interval", minutes=15)
+scheduler.add_job(func=lambda: course_fetcher.update_courses("2025", "1", "NB"), trigger="interval", minutes=15)
 scheduler.start()
+
+@app.route('/')
+def select_parameters():
+    return render_template('select.html')
+
+@app.route('/search')
+def search():
+    year = request.args.get('year', '2025')
+    term = request.args.get('term', '1')
+    campus = request.args.get('campus', 'NB')
+    return render_template('search.html', year=year, term=term, campus=campus)
 
 @app.route('/api/health')
 @limiter.exempt
@@ -53,11 +64,12 @@ def health_check():
 @limiter.limit("100 per minute")
 def get_courses():
     try:
-        subject = request.args.get('subject')
-        course_number = request.args.get('course_number')
-        name = request.args.get('name')
+        year = request.args.get('year', '2025')
+        term = request.args.get('term', '1')
+        campus = request.args.get('campus', 'NB')
+        search = request.args.get('search', '')
 
-        courses = course_fetcher.get_courses(subject, course_number, name)
+        courses = course_fetcher.get_courses(search=search, year=year, term=term, campus=campus)
         return jsonify({
             "status": "success",
             "data": courses,
@@ -69,10 +81,6 @@ def get_courses():
             "status": "error",
             "message": "Failed to fetch course data"
         }), 500
-
-@app.route('/')
-def docs():
-    return send_from_directory('static', 'docs.html')
 
 @app.route('/static/<path:path>')
 def serve_static(path):
