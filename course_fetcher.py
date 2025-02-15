@@ -98,9 +98,9 @@ class CourseFetcher:
         """Fetch fresh course data from Rutgers API"""
         try:
             params = {
-                "year": year,
-                "term": term,
-                "campus": campus
+                "year": "2025",
+                "term": "1",
+                "campus": "NB"
             }
             logger.info(f"Fetching courses with parameters: {params}")
 
@@ -140,9 +140,7 @@ class CourseFetcher:
             if not self.courses:
                 raise
 
-    def get_courses(self, subject: Optional[str] = None, course_number: Optional[str] = None, 
-                   name: Optional[str] = None, year: str = "2025", term: str = "1", 
-                   campus: str = "NB") -> List[Dict]:
+    def get_courses(self, subject: Optional[str] = None, course_number: Optional[str] = None, name: Optional[str] = None) -> List[Dict]:
         """Get filtered course data with enriched information"""
         try:
             if not self.courses:
