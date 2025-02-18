@@ -1,11 +1,12 @@
 # Rutgers Course Search
 
-A Flask web application for searching Rutgers University course information in real-time.
+A Flask web application for searching Rutgers University course information in real time.
 
 ## Features
 - Real-time course data from Rutgers API
 - Search by title, subject, or course number
 - Filter by year, term, and campus
+- Implemented Fuzzy Search algorithm
 - Detailed course info (sections, times, instructors, etc.)
 
 ## Tech Stack
