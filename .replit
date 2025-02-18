@@ -4,11 +4,11 @@ modules = ["python-3.11"]
 channel = "stable-24_05"
 
 [deployment]
-deploymentTarget = "gce"
-run = ["sh", "-c", "python main.py & python discord_bot.py"]
+deploymentTarget = "cloudrun"
+run = ["sh", "-c", "python main.py"]
 
 [workflows]
-runButton = "Project"
+runButton = "Flask Server"
 
 [[workflows.workflow]]
 name = "Project"
@@ -44,7 +44,7 @@ author = 20546446
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "python discord_bot.py"
+args = "python app.py"
 
 [[ports]]
 localPort = 3000
