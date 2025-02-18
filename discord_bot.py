@@ -5,6 +5,7 @@ import sqlite3
 import os
 from discord.ext import commands
 
+# Bot Token
 TOKEN = os.getenv("DISCORD_BOT_TOKEN")
 SQL_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data", "snipes.db")
 RUTGERS_API_URL = "https://sis.rutgers.edu/soc/api/courses.json?year=2025&term=1&campus=NB"
