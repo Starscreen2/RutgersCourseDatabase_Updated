@@ -3,183 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rutgers Course Search</title>
+    <title>Rutgers Course Search - Select Parameters</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <link rel="stylesheet" href="/static/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </head>
 <body>
     <!-- Add Rutgers Navigation Bar -->
     <nav class="navbar navbar-expand-lg">
         <div class="container">
-            <a class="navbar-brand" href="/">Rutgers Course Search</a>
+            <a class="navbar-brand text-outline" href="/">Rutgers Course Search</a>
             <div class="d-flex align-items-center">
                 <a href="https://discord.gg/8GXTRWWYqb" class="discord-link" target="_blank">
-                    <i class="bi bi-discord me-2"></i>Join Discord Sniper
+                    <i class="bi bi-discord me-2"></i>Discord Sniper
                 </a>
             </div>
         </div>
     </nav>
 
     <div class="container">
-        <h2 class="mb-4">Course Search</h2>
-
-        <div class="search-params mt-4">
-            <p class="mb-1">
-                <strong>Year:</strong> {{ year }}
-                <strong class="ms-3">Term:</strong> 
-                {% if term == '0' %}Winter
-                {% elif term == '1' %}Spring
-                {% elif term == '7' %}Summer
-                {% elif term == '9' %}Fall
-                {% endif %}
-                <strong class="ms-3">Campus:</strong> 
-                {% if campus == 'NB' %}New Brunswick
-                {% elif campus == 'NK' %}Newark
-                {% elif campus == 'CM' %}Camden
-                {% endif %}
-                <a href="/" class="btn btn-sm btn-outline-secondary float-end">Change</a>
-            </p>
-        </div>
-
-        <div class="search-form">
-            <form id="searchForm">
-                <div class="form-group">
-                    <input type="text" class="form-control" id="search" placeholder="Search courses (e.g., CS 111, Intro to Computer Science)">
-                </div>
-                <button type="submit" class="btn btn-primary mt-3">Search Courses</button>
-            </form>
-        </div>
-
-        <!-- Add loading spinner -->
-        <div id="loadingSpinner" class="loading-spinner">
-            <div class="spinner-border text-primary" role="status">
-                <span class="visually-hidden">Loading...</span>
+        <h2 class="mb-4">Select Parameters</h2>
+        <form action="/search" method="GET">
+            <div class="form-group mb-3">
+                <label for="year">Year:</label>
+                <select class="form-control" id="year" name="year" required>
+                    <option value="">Select a Year</option>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                </select>
             </div>
-            <p class="mt-2">Searching courses...</p>
-        </div>
-
-        <div class="results" id="results"></div>
+            <div class="form-group mb-3">
+                <label for="term">Term:</label>
+                <select class="form-control" id="term" name="term" required>
+                    <option value="">Select a Term</option>
+                    <option value="0">Winter</option>
+                    <option value="1">Spring</option>
+                    <option value="7">Summer</option>
+                    <option value="9">Fall</option>
+                </select>
+            </div>
+            <div class="form-group mb-3">
+                <label for="campus">Campus:</label>
+                <select class="form-control" id="campus" name="campus" required>
+                    <option value="">Select a Campus</option>
+                    <option value="NB">New Brunswick</option>
+                    <option value="NK">Newark</option>
+                    <option value="CM">Camden</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Continue to Course Search</button>
+            </div>
+        </form>
     </div>
 
-    <script>
-        function copyToClipboard(text, button) {
-            navigator.clipboard.writeText(text).then(() => {
-                // Change icon to check mark
-                button.innerHTML = '<i class="bi bi-check"></i>';
-                button.classList.add('copy-success');
-
-                // Reset after 2 seconds
-                setTimeout(() => {
-                    button.innerHTML = '<i class="bi bi-clipboard"></i>';
-                    button.classList.remove('copy-success');
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy:', err);
-            });
-        }
-
-        document.getElementById('searchForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const search = document.getElementById('search').value;
-            const loadingSpinner = document.getElementById('loadingSpinner');
-            const resultsDiv = document.getElementById('results');
-
-            // Show loading spinner, hide previous results
-            loadingSpinner.style.display = 'block';
-            resultsDiv.innerHTML = '';
-
-            const params = new URLSearchParams({
-                year: '{{ year }}',
-                term: '{{ term }}',
-                campus: '{{ campus }}',
-                search: search
-            });
-
-            try {
-                const response = await fetch(`/api/courses?${params}`);
-                const data = await response.json();
-
-                // Hide loading spinner
-                loadingSpinner.style.display = 'none';
-
-                if (data.status === 'success' && data.data.length > 0) {
-                    resultsDiv.innerHTML = data.data.map((course, courseIndex) => `
-                        <div class="search-result-item card mb-4">
-                            <div class="card-header">
-                                <h4 class="mb-0">${course.courseString} - ${course.title}</h4>
-                            </div>
-                            <div class="card-body">
-                                <div class="row mb-3">
-                                    <div class="col-md-6">
-                                        <p><strong>Subject:</strong> ${course.subject} - ${course.subjectDescription}</p>
-                                        <p><strong>Credits:</strong> ${course.creditsDescription || course.credits}</p>
-                                        <p><strong>School:</strong> ${course.school || 'N/A'}</p>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <p><strong>Campus Locations:</strong> ${course.campusLocations.join(', ') || 'N/A'}</p>
-                                        <p><strong>Prerequisites:</strong> ${course.prerequisites || 'None'}</p>
-                                    </div>
-                                </div>
-
-                                <div class="mb-3">
-                                    <h5>Core Requirements:</h5>
-                                    <p>${course.coreRequirements && course.coreRequirements.length > 0 ? 
-                                        course.coreRequirements.map(req => `${req.code}: ${req.description}`).join('<br>') : 
-                                        'None'}</p>
-                                </div>
-
-                                <div class="sections">
-                                    <button class="btn btn-primary mb-3" type="button" 
-                                            data-bs-toggle="collapse" 
-                                            data-bs-target="#sections-${courseIndex}" 
-                                            aria-expanded="false" 
-                                            aria-controls="sections-${courseIndex}">
-                                        Show/Hide ${course.sections.length} Sections
-                                    </button>
-                                    <div class="collapse" id="sections-${courseIndex}">
-                                        ${course.sections.map(section => `
-                                            <div class="section-item card mb-3">
-                                                <div class="card-body">
-                                                    <h6>Section ${section.number} (Index: ${section.index} 
-                                                        <button class="copy-button" onclick="copyToClipboard('${section.index}', this)" title="Copy Index">
-                                                            <i class="bi bi-clipboard"></i>
-                                                        </button>)
-                                                    </h6>
-                                                    <p><strong>Instructors:</strong> ${section.instructors.join(', ') || 'TBA'}</p>
-                                                    <p><strong>Status:</strong> <span class="status-${section.status === 'OPEN' ? 'open' : 'closed'}">${section.status}</span></p>
-                                                    ${section.comments ? `<p><strong>Comments:</strong> ${section.comments}</p>` : ''}
-                                                    <div class="meeting-times">
-                                                        <strong>Meeting Times:</strong><br>
-                                                        ${section.meeting_times.map(time => `
-                                                            <p>
-                                                                ${time.day || 'TBA'} 
-                                                                ${time.start_time.formatted} - ${time.end_time.formatted}<br>
-                                                                Location: ${time.building} ${time.room}<br>
-                                                                Campus: ${time.campus}<br>
-                                                                Mode: ${time.mode}
-                                                            </p>
-                                                        `).join('')}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `).join('');
-                } else {
-                    resultsDiv.innerHTML = '<div class="alert alert-info">No courses found</div>';
-                }
-            } catch (error) {
-                // Hide loading spinner and show error
-                loadingSpinner.style.display = 'none';
-                console.error('Error searching courses:', error);
-                resultsDiv.innerHTML = '<div class="alert alert-danger">Error searching courses</div>';
-            }
-        });
-    </script>
+    <!-- Footer -->
+    <footer class="text-center mt-5 p-3 bg-dark text-light">
+        <p class="mb-0"><a href="https://v0-course-data-hub-3o.vercel.app/" class="text-light" target="_blank">How this site was made</a></p>
+    </footer>
 </body>
 </html>
