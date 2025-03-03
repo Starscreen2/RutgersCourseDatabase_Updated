@@ -1,42 +1,87 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const campusMap = {
-        "1": "College Ave",
-        "2": "Busch",
-        "3": "Livingston", 
-        "4": "Cook/Doug"
-    };
-
-    // Helper function to format meeting times
-    function formatMeetingTimes(meetingTimes) {
-        return meetingTimes.map(meeting => `
-            ${meeting.day}: ${meeting.start_time.formatted} - ${meeting.end_time.formatted}
-            <br>Location: ${meeting.building} ${meeting.room}
-            <br>Campus: ${meeting.campus}
-            <br>Mode: ${meeting.mode}
-        `).join('<br><br>');
+document.addEventListener("DOMContentLoaded", function () {
+    // Initialize Bootstrap tooltips with HTML enabled
+    function initializeTooltips() {
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+        tooltipTriggerList.forEach(tooltipEl => {
+            new bootstrap.Tooltip(tooltipEl, {
+                html: true  // ✅ Enables rendering of HTML inside tooltips
+            });
+        });
     }
 
-    // Helper function to format core requirements
-    function formatCoreRequirements(requirements) {
-        if (!requirements || requirements.length === 0) return 'None';
-        return requirements.map(req => 
-            `${req.code}: ${req.description}`
-        ).join('<br>');
+    async function fetchSalaryData(instructorName, tooltipElement) {
+        try {
+            // Convert "LAST, FIRST" to "First Last"
+            let nameParts = instructorName.split(", ");
+            let formattedName = nameParts.length === 2 ? `${nameParts[1]} ${nameParts[0]}` : instructorName;
+
+            console.log("🔍 Fetching salary for:", formattedName); // Debugging
+
+            const response = await fetch(`/api/salary?name=${encodeURIComponent(formattedName)}`);
+            const data = await response.json();
+            console.log("📡 API Response:", data); // Debugging
+
+            let tooltipInstance = bootstrap.Tooltip.getInstance(tooltipElement);
+            if (!tooltipInstance) return;
+
+            // ✅ Format tooltip content with proper layout while using setContent method
+            if (data.error) {
+                tooltipInstance.setContent({ '.tooltip-inner': "No salary data found" });
+            } else {
+                tooltipInstance.setContent({
+                    '.tooltip-inner': `
+                        <div style="text-align: left; max-width: 280px;">
+                            <strong>${data.name}</strong><br><br>
+                            <strong>Title:</strong> ${data.title}<br>
+                            <strong>Department:</strong> ${data.department}<br>
+                            <strong>Campus:</strong> ${data.campus}<br>
+                            <strong>Base Pay:</strong> ${data.base_pay}<br>
+                            <strong>Gross Pay:</strong> ${data.gross_pay}<br>
+                            <strong>Hire Date:</strong> ${data.hire_date}
+                        </div>
+                    `
+                });
+            }
+
+            console.log("✅ Tooltip updated successfully"); // Debugging
+        } catch (error) {
+            console.error("❌ Error fetching salary data:", error);
+
+            let tooltipInstance = bootstrap.Tooltip.getInstance(tooltipElement);
+            if (tooltipInstance) {
+                tooltipInstance.setContent({ '.tooltip-inner': "Error loading salary data" });
+            }
+        }
     }
 
-    // Course search functionality
+    // ✅ Add single event listener for instructor hover (fixes duplicate event issue)
+    document.body.addEventListener("mouseover", function (event) {
+        if (event.target.classList.contains("instructor-name")) {
+            let instructorName = event.target.textContent.trim();
+            let tooltipElement = event.target;
+
+            fetchSalaryData(instructorName, tooltipElement);
+        }
+    });
+
+    // ✅ Ensure tooltips initialize correctly after dynamic content loads
+    initializeTooltips();
+
+    // ================================
+    // Course Search Functionality
+    // ================================
     const searchForm = document.getElementById('searchForm');
-    const searchInput = document.getElementById('searchInput');
-    const searchResults = document.getElementById('searchResults');
+    const searchInput = document.getElementById('search');
+    const searchResults = document.getElementById('results');
 
-    searchForm.addEventListener('submit', function(e) {
+    searchForm.addEventListener('submit', function (e) {
         e.preventDefault();
         const searchTerm = searchInput.value.trim();
 
         if (searchTerm) {
             searchResults.innerHTML = '<div class="text-center">Searching...</div>';
 
-            fetch(`/api/courses?name=${encodeURIComponent(searchTerm)}`)
+            fetch(`/api/courses?search=${encodeURIComponent(searchTerm)}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success' && data.data.length > 0) {
@@ -49,18 +94,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <div class="row mb-3">
                                         <div class="col-md-6">
                                             <p><strong>Subject:</strong> ${course.subject} - ${course.subjectDescription}</p>
-                                            <p><strong>Credits:</strong> ${course.credits} (${course.creditsDescription})</p>
+                                            <p><strong>Credits:</strong> ${course.credits}</p>
                                             <p><strong>School:</strong> ${course.school}</p>
                                         </div>
                                         <div class="col-md-6">
                                             <p><strong>Campus Locations:</strong> ${course.campusLocations.join(', ')}</p>
                                             <p><strong>Prerequisites:</strong> ${course.prerequisites || 'None'}</p>
                                         </div>
-                                    </div>
-
-                                    <div class="mb-3">
-                                        <h5>Core Requirements:</h5>
-                                        <p>${formatCoreRequirements(course.coreRequirements)}</p>
                                     </div>
 
                                     <div class="sections">
@@ -76,12 +116,25 @@ document.addEventListener('DOMContentLoaded', function() {
                                                 <div class="section-item card mb-3">
                                                     <div class="card-body">
                                                         <h6>Section ${section.number} (Index: ${section.index})</h6>
-                                                        <p><strong>Instructors:</strong> ${section.instructors.join(', ') || 'TBA'}</p>
+                                                        <p><strong>Instructors:</strong> 
+                                                            ${section.instructors.map(instructor => 
+                                                                `<span class="instructor-name" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                                title="Loading salary data...">
+                                                                ${instructor.trim()}</span>`
+                                                            ).join(', ') || 'TBA'}
+                                                        </p>
                                                         <p><strong>Status:</strong> ${section.status}</p>
-                                                        ${section.comments ? `<p><strong>Comments:</strong> ${section.comments}</p>` : ''}
                                                         <div class="meeting-times">
                                                             <strong>Meeting Times:</strong><br>
-                                                            ${formatMeetingTimes(section.meeting_times)}
+                                                            ${section.meeting_times.map(time => `
+                                                                <p>
+                                                                    ${time.day || 'TBA'} 
+                                                                    ${time.start_time.formatted} - ${time.end_time.formatted}<br>
+                                                                    Location: ${time.building} ${time.room}<br>
+                                                                    Campus: ${time.campus}<br>
+                                                                    Mode: ${time.mode}
+                                                                </p>
+                                                            `).join('')}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -93,6 +146,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         `).join('');
 
                         searchResults.innerHTML = resultsHtml;
+                        initializeTooltips();
                     } else {
                         searchResults.innerHTML = '<div class="alert alert-info">No courses found</div>';
                     }
@@ -104,7 +158,9 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Check API health status
+    // ================================
+    // API Health Status Checker
+    // ================================
     function updateStatus() {
         fetch('/api/health')
             .then(response => response.json())
@@ -133,7 +189,6 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     }
 
-    // Update status every 30 seconds
     updateStatus();
     setInterval(updateStatus, 30000);
 });

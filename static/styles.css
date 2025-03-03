@@ -1,11 +1,19 @@
+/* ============================= */
+/* Color Variables for Theme */
+/* ============================= */
 :root {
     --color-primary: #2D3748;
     --color-secondary: #4299E1;
     --color-background: #F7FAFC;
     --color-text: #1A202C;
     --color-success: #48BB78;
+    --color-danger: #DC3545;
+    --color-hover: #3182ce;
 }
 
+/* ============================= */
+/* General Page Styles */
+/* ============================= */
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--color-background);
@@ -13,31 +21,31 @@ body {
     line-height: 1.6;
 }
 
+/* ============================= */
 /* Rutgers Navigation Bar Styles */
+/* ============================= */
 .navbar {
-    background-color: #CC0033;
+    background-color: #CC0033; /* Rutgers Scarlet Red */
     padding: 1rem 0;
-}
-
-.navbar-brand, .nav-link {
-    color: white !important;
 }
 
 .navbar-brand {
     color: white !important;
     font-size: 1.5rem;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+}
+
+.nav-link {
+    color: white !important;
+    transition: color 0.2s ease-in-out;
 }
 
 .nav-link:hover {
     color: rgba(255, 255, 255, 0.9) !important;
 }
 
-.text-outline {
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-    font-weight: bold;
-}
-
-
+/* Discord Button */
 .discord-link {
     color: white;
     text-decoration: none;
@@ -52,17 +60,24 @@ body {
     color: #CC0033;
 }
 
-/* Original Styles Below */
+/* ============================= */
+/* Search Bar & Course List */
+/* ============================= */
 .container {
-    max-width: 800px;
-    margin-top: 30px;
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
 }
 
-.search-params {
-    background-color: #f8f9fa;
-    padding: 10px;
+.search-form {
+    margin-top: 20px;
+}
+
+#search {
+    border: 2px solid var(--color-primary);
     border-radius: 5px;
-    margin-bottom: 20px;
+    padding: 10px;
+    width: 100%;
 }
 
 .results {
@@ -74,6 +89,13 @@ body {
     padding: 15px;
     margin-bottom: 20px;
     border-radius: 5px;
+    background: white;
+    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.course-item h4 {
+    color: var(--color-primary);
+    font-size: 1.3rem;
 }
 
 .section-details {
@@ -82,38 +104,68 @@ body {
     border-top: 1px solid #eee;
 }
 
-.meeting-times {
-    margin-left: 15px;
-    font-size: 0.9em;
+/* ============================= */
+/* Instructor Names with Tooltips */
+/* ============================= */
+.instructor-name {
+    font-weight: bold;
+    color: var(--color-danger);
+    cursor: pointer;
+    text-decoration: underline;
 }
 
+.instructor-name:hover {
+    color: #C9302C;
+}
+
+/* ============================= */
+/* Bootstrap Tooltip Customization */
+/* ============================= */
+.tooltip-inner {
+    background-color: var(--color-primary);
+    color: #fff;
+    padding: 12px;
+    font-size: 14px;
+    text-align: left;
+    max-width: 280px;
+    border-radius: 5px;
+    line-height: 1.4;
+    white-space: normal;  /* Allows text wrapping */
+}
+
+.bs-tooltip-top .tooltip-arrow::before {
+    border-top-color: var(--color-primary) !important;
+}
+
+/* ============================= */
+/* Status Indicators */
+/* ============================= */
 .status-open {
-    color: #28a745;
+    color: var(--color-success);
     font-weight: bold;
 }
 
 .status-closed {
-    color: #dc3545;
+    color: var(--color-danger);
     font-weight: bold;
 }
 
-.copy-button {
-    background: none;
-    border: none;
-    color: #0d6efd;
-    padding: 0 5px;
-    cursor: pointer;
+/* ============================= */
+/* Buttons */
+/* ============================= */
+.btn-primary {
+    background-color: var(--color-secondary);
+    border-color: var(--color-secondary);
 }
 
-.copy-button:hover {
-    color: #0a58ca;
+.btn-primary:hover {
+    background-color: var(--color-hover);
+    border-color: var(--color-hover);
 }
 
-.copy-success {
-    color: #28a745;
-    transition: color 0.3s ease;
-}
-
+/* ============================= */
+/* Loading Spinner */
+/* ============================= */
 .loading-spinner {
     display: none;
     text-align: center;
@@ -125,16 +177,22 @@ body {
     height: 3rem;
 }
 
-.search-container {
-    margin-bottom: 2rem;
+/* ============================= */
+/* Copy Button (For Index Numbers) */
+/* ============================= */
+.copy-button {
+    background: none;
+    border: none;
+    color: var(--color-secondary);
+    padding: 0 5px;
+    cursor: pointer;
 }
 
-.btn-primary {
-    background-color: var(--color-secondary);
-    border-color: var(--color-secondary);
+.copy-button:hover {
+    color: var(--color-hover);
 }
 
-.btn-primary:hover {
-    background-color: #3182ce;
-    border-color: #3182ce;
+.copy-success {
+    color: var(--color-success);
+    transition: color 0.3s ease;
 }
