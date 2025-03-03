@@ -2,13 +2,13 @@
 
 https://rutgers.replit.app/
 
-A Flask web application for searching Rutgers University course information in real time.
+A Flask-based web application for searching Rutgers University course and instructor salary information in real-time.
 
 ## Features
 - Real-time course data from Rutgers API
+- Instructor salary lookup via a hover tooltip (NEW)
 - Search by title, subject, or course number
 - Filter by year, term, and campus
-- Implemented Fuzzy Search algorithm
 - Detailed course info (sections, times, instructors, etc.)
 
 ## Tech Stack
@@ -18,19 +18,22 @@ A Flask web application for searching Rutgers University course information in r
 
 ## API Endpoints
 - GET /api/courses: Get course info with filters
+- GET /api/salary: Retrieves salary data for an instructor (NEW)
 - GET /api/health: Check API status
 
 ## Rate Limits
-- 200 requests/day
-- 50 requests/hour
-- 30 requests/minute for /api/courses
-
-## Running Locally
-```bash
-python main.py  # Development (port 5000)
+- Adequate
 
 Structure
-/app.py: Main Flask app
-/course_fetcher.py: Data processing
-/templates/: HTML templates
-/static/: Assets
+/app.py                 # Main Flask app
+/salary_api.py          # Instructor salary processing (NEW)
+/course_fetcher.py      # Course data processing
+/static/                # Assets (CSS, JavaScript)
+/templates/             # HTML templates
+
+
+🎯 Want to Contribute?
+Pull requests and suggestions are welcome! 🎉
+
+🔥 Try it out and let me know what you think! 🚀
+
