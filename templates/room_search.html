@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rutgers Room Search</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/styles.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <!-- Add Rutgers Navigation Bar -->
+    <nav class="navbar navbar-expand-lg">
+        <div class="container">
+            <a class="navbar-brand text-outline" href="/">Rutgers Course Search</a>
+            <div class="d-flex align-items-center">
+                <a href="https://discord.gg/8GXTRWWYqb" class="discord-link" target="_blank">
+                    <i class="bi bi-discord me-2"></i>Discord Sniper
+                </a>
+                <!-- Links Dropdown -->
+                <div class="dropdown ms-3">
+                    <a class="discord-link dropdown-toggle" href="#" role="button" id="linksDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="bi bi-link-45deg me-2"></i>Links
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="linksDropdown">
+                        <li><a class="dropdown-item" href="https://rutgers-course-planner.vercel.app/" target="_blank">Schedule Planner</a></li>
+                        <li><a class="dropdown-item" href="https://rutgers-dining.vercel.app/" target="_blank">Meal Planner</a></li>
+                        <li><a class="dropdown-item" href="https://scheduling.rutgers.edu/scheduling/academic-calendar" target="_blank">Academic Calendar</a></li>
+                        <li><a class="dropdown-item" href="https://ibrahimmudassar.github.io/Rutgers-Salaries/" target="_blank">Rutgers Salaries</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="https://github.com/Starscreen2" target="_blank">Github</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <h2 class="mb-4">Search</h2>
+
+        <div class="search-params mt-4">
+            <p class="mb-1">
+                <strong>Year:</strong> {{ year }}
+                <strong class="ms-3">Term:</strong> 
+                {% if term == '0' %}Winter
+                {% elif term == '1' %}Spring
+                {% elif term == '7' %}Summer
+                {% elif term == '9' %}Fall
+                {% endif %}
+                <strong class="ms-3">Campus:</strong> 
+                {% if campus == 'NB' %}New Brunswick
+                {% elif campus == 'NK' %}Newark
+                {% elif campus == 'CM' %}Camden
+                {% endif %}
+                <a href="/" class="btn btn-sm btn-outline-secondary float-end">Change</a>
+            </p>
+        </div>
+
+        <!-- Main tabs -->
+        <ul class="nav nav-tabs mb-4">
+            <li class="nav-item">
+                <a class="nav-link" href="/search?year={{ year }}&term={{ term }}&campus={{ campus }}">Course Search</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link active" href="/room-search?year={{ year }}&term={{ term }}&campus={{ campus }}">Room Search</a>
+            </li>
+        </ul>
+
+        <div class="search-form">
+            <form id="roomSearchForm">
+                <div class="form-group">
+                    <input type="text" class="form-control" id="search" placeholder="Search rooms (e.g., ARC 103, Hill 114, Beck Hall)">
+                </div>
+                <button type="submit" class="btn btn-primary mt-3">Search Rooms</button>
+            </form>
+        </div>
+
+        <!-- Loading spinner -->
+        <div id="loadingSpinner" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Searching rooms...</p>
+        </div>
+
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        document.getElementById('roomSearchForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const search = document.getElementById('search').value;
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            const resultsDiv = document.getElementById('results');
+
+            loadingSpinner.style.display = 'block';
+            resultsDiv.innerHTML = '';
+
+            const params = new URLSearchParams({
+                year: '{{ year }}',
+                term: '{{ term }}',
+                campus: '{{ campus }}',
+                search: search
+            });
+
+            try {
+                const response = await fetch(`/api/rooms?${params}`);
+                const data = await response.json();
+
+                loadingSpinner.style.display = 'none';
+
+                if (data.status === 'success' && data.data.length > 0) {
+                    // Group rooms by building for better organization
+                    const roomsByBuilding = {};
+                    data.data.forEach(room => {
+                        const building = room.building;
+                        if (!roomsByBuilding[building]) {
+                            roomsByBuilding[building] = [];
+                        }
+                        roomsByBuilding[building].push(room);
+                    });
+
+                    let resultsHTML = '';
+                    
+                    for (const [building, rooms] of Object.entries(roomsByBuilding)) {
+                        // Create a card for each building with collapsible content
+                        const buildingId = `building-${building.replace(/\s+/g, '-')}`;
+                        resultsHTML += `
+                            <div class="card mb-4">
+                                <div class="card-header bg-light" style="cursor: pointer;" 
+                                     data-bs-toggle="collapse" data-bs-target="#${buildingId}" 
+                                     aria-expanded="false" aria-controls="${buildingId}">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="mb-0">${building} Building</h5>
+                                        <div>
+                                            <span class="badge bg-primary me-2">${rooms.length} Room${rooms.length !== 1 ? 's' : ''}</span>
+                                            <i class="bi bi-chevron-down"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="${buildingId}" class="collapse">
+                                    <div class="card-body">
+                                        <div class="row">
+                        `;
+                        
+                        // Add rooms in this building
+                        rooms.forEach(room => {
+                            resultsHTML += `
+                                <div class="col-md-4 col-sm-6 mb-3">
+                                    <div class="card h-100">
+                                        <div class="card-body d-flex flex-column">
+                                            <h6 class="card-title">${room.full_name}</h6>
+                                            <p class="card-text mb-1">
+                                                <strong>Building:</strong> ${room.building_name || room.building}
+                                            </p>
+                                            <p class="card-text mb-1">
+                                                <strong>Room:</strong> ${room.room}
+                                            </p>
+                                            <div class="mt-auto pt-2">
+                                                <a href="/room-details?year=${encodeURIComponent('{{ year }}')}&term=${encodeURIComponent('{{ term }}')}&campus=${encodeURIComponent('{{ campus }}')}&building=${encodeURIComponent(room.building)}&room=${encodeURIComponent(room.room)}" 
+                                                   class="btn btn-sm btn-primary w-100">
+                                                   <i class="bi bi-calendar-week me-1"></i> View Schedule
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        resultsHTML += `
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    resultsDiv.innerHTML = resultsHTML;
+                } else {
+                    resultsDiv.innerHTML = '<div class="alert alert-info">No rooms found matching your search criteria.</div>';
+                }
+            } catch (error) {
+                loadingSpinner.style.display = 'none';
+                console.error('Error searching rooms:', error);
+                resultsDiv.innerHTML = '<div class="alert alert-danger">Error searching rooms</div>';
+            }
+        });
+
+        // Trigger the search on page load to show all rooms initially
+        window.addEventListener('load', function() {
+            document.getElementById('roomSearchForm').dispatchEvent(new Event('submit'));
+        });
+        
+        // Add event listener for collapse events to handle the chevron icon rotation
+        document.addEventListener('click', function(e) {
+            // Check if the clicked element or its parent has data-bs-toggle="collapse"
+            const toggleElement = e.target.closest('[data-bs-toggle="collapse"]');
+            
+            if (toggleElement) {
+                const targetId = toggleElement.getAttribute('data-bs-target');
+                const target = document.querySelector(targetId);
+                const icon = toggleElement.querySelector('.bi-chevron-down, .bi-chevron-up');
+                
+                if (target && icon) {
+                    // Check if the target is currently collapsed
+                    const isCollapsed = !target.classList.contains('show');
+                    
+                    // Toggle the icon based on collapse state
+                    if (isCollapsed) {
+                        icon.classList.remove('bi-chevron-down');
+                        icon.classList.add('bi-chevron-up');
+                    } else {
+                        icon.classList.remove('bi-chevron-up');
+                        icon.classList.add('bi-chevron-down');
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

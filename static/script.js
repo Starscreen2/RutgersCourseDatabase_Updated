@@ -1,3 +1,23 @@
+// Function to copy text to clipboard
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Show success feedback
+        const activeButton = document.activeElement;
+        if (activeButton && activeButton.classList.contains('copy-button')) {
+            const originalHTML = activeButton.innerHTML;
+            activeButton.innerHTML = '<i class="bi bi-check"></i>';
+            activeButton.classList.add('copy-success');
+            
+            setTimeout(() => {
+                activeButton.innerHTML = originalHTML;
+                activeButton.classList.remove('copy-success');
+            }, 1500);
+        }
+    }).catch(err => {
+        console.error('Failed to copy text: ', err);
+    });
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     // Initialize Bootstrap tooltips with HTML enabled
     function initializeTooltips() {
@@ -31,6 +51,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 tooltipInstance.setContent({
                     '.tooltip-inner': `
                         <div style="text-align: left; max-width: 280px;">
+                            <em>Special thanks to Github: ibrahimmudassar for the data</em><br><br>
+                            <em>As of December, 2021</em><br><br>
                             <strong>${data.name}</strong><br><br>
                             <strong>Title:</strong> ${data.title}<br>
                             <strong>Department:</strong> ${data.department}<br>
@@ -100,6 +122,8 @@ document.addEventListener("DOMContentLoaded", function () {
                                         <div class="col-md-6">
                                             <p><strong>Campus Locations:</strong> ${course.campusLocations.join(', ')}</p>
                                             <p><strong>Prerequisites:</strong> ${course.prerequisites || 'None'}</p>
+                                            <p><strong>Core Codes:</strong> ${Array.isArray(course.coreRequirements) && course.coreRequirements.length > 0 ? 
+                                                course.coreRequirements.map(core => `${core.code} (${core.description})`).join(', ') : 'N/A'}</p>
                                         </div>
                                     </div>
 
@@ -123,7 +147,7 @@ document.addEventListener("DOMContentLoaded", function () {
                                                                 ${instructor.trim()}</span>`
                                                             ).join(', ') || 'TBA'}
                                                         </p>
-                                                        <p><strong>Status:</strong> ${section.status}</p>
+                                                        <p><strong>Status:</strong> <span class="${section.status.toLowerCase() === 'open' ? 'status-open' : 'status-closed'}">${section.status}</span></p>
                                                         <div class="meeting-times">
                                                             <strong>Meeting Times:</strong><br>
                                                             ${section.meeting_times.map(time => `

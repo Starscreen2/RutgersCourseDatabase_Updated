@@ -1,6 +1,4 @@
-/* ============================= */
-/* Color Variables for Theme */
-/* ============================= */
+
 :root {
     --color-primary: #2D3748;
     --color-secondary: #4299E1;
@@ -11,9 +9,6 @@
     --color-hover: #3182ce;
 }
 
-/* ============================= */
-/* General Page Styles */
-/* ============================= */
 body {
     font-family: 'Inter', sans-serif;
     background-color: var(--color-background);
@@ -21,9 +16,6 @@ body {
     line-height: 1.6;
 }
 
-/* ============================= */
-/* Rutgers Navigation Bar Styles */
-/* ============================= */
 .navbar {
     background-color: #CC0033; /* Rutgers Scarlet Red */
     padding: 1rem 0;
@@ -45,7 +37,26 @@ body {
     color: rgba(255, 255, 255, 0.9) !important;
 }
 
-/* Discord Button */
+/* Tab styling */
+.nav-tabs .nav-link {
+    color: #000 !important;
+    font-weight: 600;
+    border: 1px solid #dee2e6;
+}
+
+.nav-tabs .nav-link.active {
+    color: #CC0033 !important;
+    background-color: #fff;
+    border-color: #dee2e6 #dee2e6 #fff;
+    border-bottom: 2px solid #CC0033;
+}
+
+.nav-tabs .nav-link:hover:not(.active) {
+    background-color: #f8f9fa;
+    color: #495057 !important;
+    border-color: #e9ecef #e9ecef #dee2e6;
+}
+
 .discord-link {
     color: white;
     text-decoration: none;
@@ -60,9 +71,7 @@ body {
     color: #CC0033;
 }
 
-/* ============================= */
-/* Search Bar & Course List */
-/* ============================= */
+
 .container {
     max-width: 900px;
     margin: auto;
@@ -104,23 +113,17 @@ body {
     border-top: 1px solid #eee;
 }
 
-/* ============================= */
-/* Instructor Names with Tooltips */
-/* ============================= */
 .instructor-name {
-    font-weight: bold;
-    color: var(--color-danger);
+    /* font-weight: bold; */
+    /* color: var(--color-danger); */
     cursor: pointer;
-    text-decoration: underline;
+    /* text-decoration: underline; */
 }
 
 .instructor-name:hover {
     color: #C9302C;
 }
 
-/* ============================= */
-/* Bootstrap Tooltip Customization */
-/* ============================= */
 .tooltip-inner {
     background-color: var(--color-primary);
     color: #fff;
@@ -130,16 +133,13 @@ body {
     max-width: 280px;
     border-radius: 5px;
     line-height: 1.4;
-    white-space: normal;  /* Allows text wrapping */
+    white-space: normal;
 }
 
 .bs-tooltip-top .tooltip-arrow::before {
     border-top-color: var(--color-primary) !important;
 }
 
-/* ============================= */
-/* Status Indicators */
-/* ============================= */
 .status-open {
     color: var(--color-success);
     font-weight: bold;
@@ -150,9 +150,7 @@ body {
     font-weight: bold;
 }
 
-/* ============================= */
-/* Buttons */
-/* ============================= */
+
 .btn-primary {
     background-color: var(--color-secondary);
     border-color: var(--color-secondary);
@@ -163,9 +161,6 @@ body {
     border-color: var(--color-hover);
 }
 
-/* ============================= */
-/* Loading Spinner */
-/* ============================= */
 .loading-spinner {
     display: none;
     text-align: center;
@@ -177,9 +172,6 @@ body {
     height: 3rem;
 }
 
-/* ============================= */
-/* Copy Button (For Index Numbers) */
-/* ============================= */
 .copy-button {
     background: none;
     border: none;
@@ -195,4 +187,32 @@ body {
 .copy-success {
     color: var(--color-success);
     transition: color 0.3s ease;
+}
+
+/* Expandable Room Cards */
+.card-header[data-bs-toggle="collapse"] {
+    transition: background-color 0.3s ease;
+}
+
+.card-header[data-bs-toggle="collapse"]:hover {
+    background-color: #e9ecef !important;
+}
+
+.card-header .bi-chevron-down,
+.card-header .bi-chevron-up {
+    transition: transform 0.3s ease;
+}
+
+.card-header[aria-expanded="true"] .bi-chevron-up {
+    transform: rotate(180deg);
+}
+
+/* Animation for collapsing/expanding */
+.collapse {
+    transition: height 0.35s ease;
+}
+
+/* Badge styling */
+.badge.bg-primary {
+    background-color: #CC0033 !important;
 }
