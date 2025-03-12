@@ -5,6 +5,8 @@ from flask_limiter.util import get_remote_address
 from flask_caching import Cache
 from apscheduler.schedulers.background import BackgroundScheduler
 from course_fetcher import CourseFetcher
+from room_fetcher import RoomFetcher  # Import the new RoomFetcher class
+from salary_api import SalaryData  # Import SalaryData class for salaries
 import logging
 
 # Configure logging
@@ -36,10 +38,16 @@ cache = Cache(app, config={'CACHE_TYPE': 'SimpleCache'})
 # Initialize course fetcher
 course_fetcher = CourseFetcher()
 
+# Initialize room fetcher with course fetcher
+room_fetcher = RoomFetcher(course_fetcher)
+
 # Initialize scheduler
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=lambda: course_fetcher.update_courses("2025", "1", "NB"), trigger="interval", minutes=15)
 scheduler.start()
+
+# Initialize SalaryData for salaries
+salary_data = SalaryData()
 
 @app.route('/')
 def select_parameters():
@@ -95,6 +103,117 @@ def ratelimit_handler(e):
         "retry_after": retry_seconds,
         "wait_message": f"Please wait {retry_seconds} seconds before trying again."
     }), 429
+
+@app.route('/api/salary', methods=['GET'])
+@limiter.limit("50 per minute")
+def get_salary():
+    instructor_name = request.args.get('name', '').strip()
+
+    if not instructor_name:
+        print("❌ No instructor name received!")
+        return jsonify({"error": "Missing instructor name"}), 400
+
+    print(f"🔍 Salary API received request for: '{instructor_name}'")  # Debugging
+
+    salary_info = salary_data.get_salary_by_instructor(instructor_name)
+
+    if salary_info:
+        salary_entry = salary_info[0]  # Get first match
+        return jsonify({
+            "name": salary_entry.get("Name", "Unknown"),
+            "title": salary_entry.get("Title", "Unknown"),
+            "department": salary_entry.get("Department", "Unknown"),
+            "campus": salary_entry.get("Campus", "Unknown"),
+            "base_pay": salary_entry.get("Base Pay", "Unknown"),
+            "gross_pay": salary_entry.get("Gross Pay", "Unknown"),
+            "hire_date": salary_entry.get("Hire Date", "Unknown")
+        })
+
+    print("⚠️ No salary data found!")
+    return jsonify({"error": "No salary data found"}), 404
+
+@app.route('/room-search')
+def room_search_page():
+    """Render the room search page"""
+    year = request.args.get('year', '2025')
+    term = request.args.get('term', '1')
+    campus = request.args.get('campus', 'NB')
+    return render_template('room_search.html', year=year, term=term, campus=campus)
+
+@app.route('/room-details')
+def room_details_page():
+    """Render the room details page with schedule"""
+    year = request.args.get('year', '2025')
+    term = request.args.get('term', '1')
+    campus = request.args.get('campus', 'NB')
+    building = request.args.get('building', '')
+    room = request.args.get('room', '')
+    
+    if not building or not room:
+        return render_template('room_search.html', year=year, term=term, campus=campus, 
+                              error="Building and room must be specified")
+    
+    return render_template('room_details.html', year=year, term=term, campus=campus,
+                          building=building, room=room)
+
+@app.route('/api/rooms')
+@limiter.limit("50 per minute")
+def get_rooms():
+    """API endpoint to get rooms matching a query"""
+    try:
+        year = request.args.get('year', '2025')
+        term = request.args.get('term', '1')
+        campus = request.args.get('campus', 'NB')
+        search = request.args.get('search', '')
+        
+        rooms = room_fetcher.search_rooms(search, year=year, term=term, campus=campus)
+        
+        return jsonify({
+            "status": "success",
+            "data": rooms,
+            "count": len(rooms),
+            "last_update": course_fetcher.last_update
+        })
+    except Exception as e:
+        logger.error(f"Error searching rooms: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": "Failed to search rooms"
+        }), 500
+
+@app.route('/api/room-schedule')
+@limiter.limit("30 per minute")
+def get_room_schedule():
+    """API endpoint to get the schedule for a specific room"""
+    try:
+        year = request.args.get('year', '2025')
+        term = request.args.get('term', '1')
+        campus = request.args.get('campus', 'NB')
+        building = request.args.get('building', '')
+        room = request.args.get('room', '')
+        
+        if not building or not room:
+            return jsonify({
+                "status": "error",
+                "message": "Building and room must be specified"
+            }), 400
+        
+        room_schedule = room_fetcher.get_room_schedule(
+            building, room, year=year, term=term, campus=campus
+        )
+        
+        return jsonify({
+            "status": "success",
+            "data": room_schedule,
+            "last_update": course_fetcher.last_update
+        })
+    except Exception as e:
+        logger.error(f"Error getting room schedule: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": "Failed to get room schedule"
+        }), 500
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

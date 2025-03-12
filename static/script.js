@@ -99,11 +99,25 @@ document.addEventListener("DOMContentLoaded", function () {
     searchForm.addEventListener('submit', function (e) {
         e.preventDefault();
         const searchTerm = searchInput.value.trim();
+        
+        // Get current URL parameters to maintain consistent year/term/campus values
+        const urlParams = new URLSearchParams(window.location.search);
+        const year = urlParams.get('year') || '2025';
+        const term = urlParams.get('term') || '1';
+        const campus = urlParams.get('campus') || 'NB';
+        
+        // Build the search query with all parameters
+        const searchParams = new URLSearchParams({
+            year: year,
+            term: term,
+            campus: campus,
+            search: searchTerm
+        });
 
         if (searchTerm) {
             searchResults.innerHTML = '<div class="text-center">Searching...</div>';
 
-            fetch(`/api/courses?search=${encodeURIComponent(searchTerm)}`)
+            fetch(`/api/courses?${searchParams.toString()}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'success' && data.data.length > 0) {
