@@ -18,4 +18,5 @@ dependencies = [
     "discord-py>=2.4.0",
     "rapidfuzz>=3.12.1",
     "pandas>=2.2.3",
+    "beautifulsoup4>=4.13.3",
 ]

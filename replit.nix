@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.openssh
     pkgs.glibcLocales
     pkgs.taskflow
     pkgs.rapidfuzz-cpp
